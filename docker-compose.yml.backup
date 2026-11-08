@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: complexe-sms-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: complexe_sms
+      POSTGRES_USER: sms_app
+      POSTGRES_PASSWORD: sms_dev_password
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - sms_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sms_app -d complexe_sms"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  sms_pgdata:

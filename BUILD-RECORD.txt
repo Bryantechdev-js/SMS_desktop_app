@@ -1,0 +1,26 @@
+COMPLEXE SMS ENGINEERING REBUILD
+Date: 2026-11-08
+Status: DEVELOPMENT SOURCE CHECKPOINT — NOT A COMPLETE PRODUCT OR INSTALLER
+
+Included in this checkpoint:
+- Rust/Tauri 2 + React/TypeScript desktop shell.
+- Rust/Axum API and PostgreSQL migrations 0001-0003.
+- Bakery operations research, technical architecture, security decisions and implementation plan.
+- Initial identity milestone: one-time first-owner bootstrap, Argon2 password hashing, opaque bearer sessions, 12-hour expiry, revocation, failed-login lockout, current-user and logout endpoints.
+- Server-side permission checks for existing catalogue and inventory routes.
+- Receipt-only inventory movement API; unsupported movement types are blocked until dedicated atomic workflows exist.
+- First-run sign-in/setup UI and Windows PowerShell setup/build guide.
+- Windows CI workflow intended to run PostgreSQL migrations, Rust tests, frontend typecheck/build and unsigned Windows Tauri packaging.
+
+Validation actually performed in this container:
+- PASS: JSON files parse.
+- PASS: identity/security static source assertions.
+- PASS: SQL migration dollar-quote pairing and migration inventory.
+- PASS: source archive integrity (to be recorded after archive generation).
+- BLOCKED: cargo fmt/test/build because Rust/Cargo are not installed here.
+- BLOCKED: pnpm install and TypeScript/Vite build because pnpm and package dependencies are not installed here; package registry access is unavailable.
+- BLOCKED: executing PostgreSQL migrations because PostgreSQL/psql/Docker are not installed here.
+- NOT RUN: Tauri Windows bundling, installer signing, Windows runtime tests, LAN/VPN, backup/restore, security penetration tests, peripherals, performance/load tests and bakery UAT.
+
+Release warning:
+This is a source engineering milestone only. It is not fully implemented, compiled, tested, signed, production-ready or safe for real stock, sales, cash or payment transactions. Do not expose the API to LAN. Follow docs/SETUP-WINDOWS.md for local validation and docs/BUILD-AND-RELEASE-STATUS.md for remaining gates.

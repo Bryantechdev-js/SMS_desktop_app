@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Complexe SMS",
+  "version": "0.1.0",
+  "identifier": "dev.sinior.complexesms",
+  "build": { "beforeDevCommand": "pnpm dev", "devUrl": "http://127.0.0.1:1420", "beforeBuildCommand": "pnpm build", "frontendDist": "../dist" },
+  "app": { "windows": [{ "title": "Complexe SMS | Bakery Operations", "width": 1440, "height": 920, "minWidth": 1100, "minHeight": 700 }], "security": { "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost http://127.0.0.1:8080; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'" } },
+  "bundle": { "active": true, "targets": ["nsis", "msi"], "shortDescription": "Bakery operations management", "category": "Business" }
+}

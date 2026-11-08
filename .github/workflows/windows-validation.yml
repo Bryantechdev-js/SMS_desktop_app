@@ -1,0 +1,83 @@
+name: Database validation and Windows test build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  database-migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sms_app
+          POSTGRES_PASSWORD: sms_ci_password
+          POSTGRES_DB: complexe_sms
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sms_app -d complexe_sms"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply migrations against PostgreSQL 16
+        env:
+          PGPASSWORD: sms_ci_password
+        run: |
+          psql -h 127.0.0.1 -U sms_app -d complexe_sms -v ON_ERROR_STOP=1 -f database/migrations/0001_initial.sql
+          psql -h 127.0.0.1 -U sms_app -d complexe_sms -v ON_ERROR_STOP=1 -f database/migrations/0002_operations_security.sql
+          psql -h 127.0.0.1 -U sms_app -d complexe_sms -v ON_ERROR_STOP=1 -f database/migrations/0003_identity_sessions.sql
+          psql -h 127.0.0.1 -U sms_app -d complexe_sms -v ON_ERROR_STOP=1 -c "SELECT count(*) AS core_tables FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';"
+
+  windows-build:
+    needs: database-migrations
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: x86_64-pc-windows-msvc
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - name: Rust format and tests
+        run: |
+          cargo fmt --all -- --check
+          cargo test --workspace --all-targets
+      - name: Install frontend dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Frontend typecheck and production bundle
+        run: |
+          pnpm --filter @complexe-sms/desktop typecheck
+          pnpm --filter @complexe-sms/desktop build
+      - name: Build API server
+        run: cargo build --release -p sms-api
+      - name: Build unsigned Windows installers (local acceptance only)
+        run: pnpm --filter @complexe-sms/desktop tauri build
+      - name: Stage test artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/server | Out-Null
+          Copy-Item target/release/sms_api.exe artifacts/server/ -ErrorAction Stop
+          Copy-Item -Recurse target/release/bundle/* artifacts/ -ErrorAction Stop
+          Copy-Item docker-compose.yml artifacts/
+          Copy-Item .env.example artifacts/ -ErrorAction Stop
+          Copy-Item -Recurse database/migrations artifacts/
+          Copy-Item docs/BUILD-AND-RELEASE-STATUS.md artifacts/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: complexe-sms-windows-unsigned-test-build
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
